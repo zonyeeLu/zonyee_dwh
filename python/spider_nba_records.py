@@ -10,7 +10,7 @@ def main():
     res = soup.find_all('div')
     list = get_content(res, 'superstarList', '0pts0')
     for tmp in list:
-        print(tmp)
+        print(tmp['卡里姆-贾巴尔'])
 
 def get_content(result,main_tag,sub_tag):
     list = []
