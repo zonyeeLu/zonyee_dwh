@@ -9,7 +9,8 @@ def main():
     soup = BeautifulSoup(res.content.decode('utf-8', 'ignore'), 'html')
     res = soup.find_all('div')
     list = get_content(res, 'superstarList', '0pts0')
-    print(list)
+    for tmp in list:
+        print(tmp)
 
 def get_content(result,main_tag,sub_tag):
     list = []
