@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# ******************************************************************************
+# 程序名称:     spider_nba_records.py
+# 功能描述:     获取nba历史记录
+# 输入参数:     无
+# 创建人名:     zonyee_lu
+# 创建日期:     20190715
+# ******************************************************************************
+# ******************************************************************************
+
 from bs4 import BeautifulSoup
 import requests
 
@@ -8,8 +19,14 @@ def main():
     # xml_file.write(str(res.text.replace(u'\xa9', u'')))
     soup = BeautifulSoup(res.content.decode('utf-8', 'ignore'), 'html')
     res = soup.find_all('div')
-    list = get_content(res, 'superstarList', '0pts0')
-    for tmp in list:
+    print("得分榜==>总分榜")
+    for tmp in get_content(res, 'superstarList', '0pts0'):
+        print(tmp)
+    print("得分榜==>场均得分榜")
+    for tmp in get_content(res, 'superstarList', '0pts1'):
+        print(tmp)
+    print("得分榜==>单场总分榜")
+    for tmp in get_content(res, 'superstarList', '0pts2'):
         print(tmp)
 
 def get_content(result,main_tag,sub_tag):
