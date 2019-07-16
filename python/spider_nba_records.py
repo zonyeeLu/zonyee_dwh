@@ -51,10 +51,11 @@ def get_content(result,main_tag,sub_tag):
 def insert_data():
     con = hive_connect()
     cur = con.cursor()
-    cur.execute("select * from test.test")
+    cur.execute("select * from default.test")
     for result in cur.fetchall():
         print(result)
-
+    cur.close()
+    con.close()
 def hive_connect():
     conn = hive.Connection(host='192.168.64.131',
                              port=10000,
