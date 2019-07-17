@@ -30,7 +30,7 @@ def main():
     # for tmp in get_content(res, 'superstarList', '0pts2'):
     #     # print(tmp)
 
-    insert_data()
+    # insert_data()
 
 def get_content(result,main_tag,sub_tag):
     list = []
@@ -48,21 +48,21 @@ def get_content(result,main_tag,sub_tag):
                             list.append(dict)
     return list
 
-def insert_data():
-    con = hive_connect()
-    cur = con.cursor()
-    cur.execute("select * from default.test")
-    for result in cur.fetchall():
-        print(result)
-    cur.close()
-    con.close()
-def hive_connect():
-    conn = hive.Connection(host='192.168.64.131',
-                             port=10000,
-                             username = None,
-                             database = 'default')
-
-    return  conn
+# def insert_data():
+#     con = hive_connect()
+#     cur = con.cursor()
+#     cur.execute("select * from default.test")
+#     for result in cur.fetchall():
+#         print(result)
+#     cur.close()
+#     con.close()
+# def hive_connect():
+#     conn = hive.Connection(host='192.168.64.131',
+#                              port=10000,
+#                              username = None,
+#                              database = 'default')
+#
+#     return  conn
 # main
 if __name__ == '__main__':
     main()

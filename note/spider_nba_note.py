@@ -18,7 +18,7 @@
 # 测试是否安装成功
 # 输入python,
 # >>from bs4 import BeautifulSoup
-# 没有报告错误,安装成功、
+# 没有报告错误,安装成功
 
 # python3 安装 BeautifulSoup
 # https://jingyan.baidu.com/article/ac6a9a5e31c87c2b643eac11.html
