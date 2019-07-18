@@ -14,14 +14,15 @@ import requests
 import re
 
 def main():
-    # xml_file = open("D:\\temp\\test.xml",'w+',encoding="utf-8")
+    global play_info_file
+    play_info_file = open("D:\\temp\\play_info_file.txt", 'w+', encoding="utf-8")
     for i in range(ord("A"), ord("Z") + 1):
         res = requests.get('http://www.stat-nba.com/playerList.php?il={0}&lil=0'.format(chr(i)))
         res.encoding = 'utf-8'
         soup = BeautifulSoup(res.content.decode('utf-8', 'ignore'), 'html')
         res = soup.find_all('div')
         list = get_content(res,'playerList')
-        print(len(list))
+        writ_flie(list)
 
 def get_content(result,main_tag):
     list=[]
@@ -39,6 +40,12 @@ def get_content(result,main_tag):
                     sub_list.append(player_type)
                     list.append(sub_list)
     return list
+
+def writ_flie(list):
+    for line in list:
+        print(line)
+        play_info_file.write(str(line).replace('[','').replace(']','').replace('\'',''))
+        play_info_file.write('\n')
 # def test(result):
 #     list=[]
 #     for str in result:

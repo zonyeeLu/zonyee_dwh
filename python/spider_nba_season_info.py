@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # ******************************************************************************
-# 程序名称:     spider_nba_records.py
-# 功能描述:     获取nba历史记录
+# 程序名称:     spider_nba_season_info.py
+# 功能描述:     获取每个赛季常规赛/季后赛球员数据榜单
 # 输入参数:     无
 # 创建人名:     zonyee_lu
 # 创建日期:     20190715
@@ -16,34 +16,37 @@ import re
 import time
 
 def main():
-
+    global season_data_file
+    season_data_file = open("D:\\temp\\season_data_file.txt", 'w+', encoding="utf-8")
     game_type=['all','1h','2h','1q','2q','3q','4q','5l','2l']
     data_type=['pts','trb','ast','blk','stl','tov','pf','ts','fg','fgper','threep','threepper','ft','ftper','g','kobe','per']
     data_time=['0','1','2']
-    for season in range(2000,int(time.strftime("%Y"))):
-        res = requests.get('http://www.stat-nba.com/season/{}.html'.format(season))
-        res.encoding = 'utf-8'
-        soup = BeautifulSoup(res.content.decode('utf-8', 'ignore'), 'html')
-        res = soup.find_all('div')
-        for game_tmp in game_type:
-            for data_tmp in data_type:
-                if game_tmp=='all':
-                    for time_tmp in data_time:
-                        if (data_tmp=='ts' or data_tmp=='threepper' or data_tmp=='ftper' or data_tmp=='g'or data_tmp=='fgper'or data_tmp=='per') and (time_tmp=='1' or time_tmp=='2'):
+    season_type = ['playoff','season']
+    for season_tmp in season_type:
+        for season in range(2018,int(time.strftime("%Y"))):
+            res = requests.get('http://www.stat-nba.com/{0}/{1}.html'.format(season_tmp,season))
+            res.encoding = 'utf-8'
+            soup = BeautifulSoup(res.content.decode('utf-8', 'ignore'), 'html')
+            res = soup.find_all('div')
+            for game_tmp in game_type:
+                for data_tmp in data_type:
+                    if game_tmp=='all':
+                        for time_tmp in data_time:
+                            if (data_tmp=='ts' or data_tmp=='threepper' or data_tmp=='ftper' or data_tmp=='g'or data_tmp=='fgper'or data_tmp=='per') and (time_tmp=='1' or time_tmp=='2'):
+                                continue
+                            else:
+                                list = get_content(res,game_tmp,data_tmp,time_tmp,season,season_tmp)
+                                writ_flie(list)
+                    else:
+                        if data_tmp=='ts' or data_tmp=='threepper' or data_tmp=='ftper' or data_tmp=='g'or data_tmp=='fgper' or data_tmp=='per':
                             continue
-                        else:
-                            list = get_content(res,game_tmp,data_tmp,time_tmp,season)
-                            print(list)
-                else:
-                    if data_tmp=='ts' or data_tmp=='threepper' or data_tmp=='ftper' or data_tmp=='g'or data_tmp=='fgper' or data_tmp=='per':
-                        continue
-                    list = get_content(res,game_tmp,data_tmp,'0',season)
-                    print(list)
+                        list = get_content(res,game_tmp,data_tmp,'0',season,season_tmp)
+                        writ_flie(list)
 
-def get_content(result,game_type,data_type,data_time,season):
+def get_content(result,game_type,data_type,data_time,season,season_type):
     data_list=[]
     for str in result:
-        if str.get('id')=='season'+ game_type:
+        if str.get('id')==season_type+ game_type:
             res1 = str.find_all('div')
             for str1 in res1:
                 if str1.get('id') == game_type + data_type + data_time:
@@ -64,8 +67,15 @@ def get_content(result,game_type,data_type,data_time,season):
                             list.append(data_type)
                             list.append(data_time)
                             list.append(season)
+                            list.append(season_type)
                             data_list.append(list)
     return data_list
+
+def writ_flie(list):
+    for line in list:
+        print(line)
+        season_data_file.write(str(line).replace('[','').replace(']','').replace('\'',''))
+        season_data_file.write('\n')
 
 def get_season(result):
     season_list = [];
