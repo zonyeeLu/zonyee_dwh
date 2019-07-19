@@ -20,4 +20,12 @@ select 3 as type_id, '最佳第六人' as type_name union all
 select 4 as type_id, '进步最快球员' as type_name union all
 select 5 as type_id, '总决赛最有价值球员' as type_name union all
 select 6 as type_id, '全明星最有价值球员' as type_name union all
+select 15 as type_id, '总冠军' as type_name union all
+select 16 as type_id, '名人堂' as type_name union all
+select 8 as type_id, '最佳阵容' as type_name union all
+select 9 as type_id, '最佳防守阵容' as type_name union all
+select 10 as type_id, '最佳新秀阵容' as type_name union all
+select 12 as type_id, '全明星阵容' as type_name union all
+select 11 as type_id, '选秀' as type_name union all
+select 14 as type_id, '数据王' as type_name union all
 select 17 as type_id, '最佳教练' as type_name;
