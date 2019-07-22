@@ -12,6 +12,7 @@ create table ods.ods_player_info(
 player_name string comment '名称',
 player_id string comment 'id',
 player_tpye string comment '类型'
-) comment '球员教练信息表';
+) comment '球员教练信息表'
+partitioned by (dt string);
 
 load data local inpath " + txt_path + " overwrite into table ods.ods_player_info partition(dt='${dt}');
