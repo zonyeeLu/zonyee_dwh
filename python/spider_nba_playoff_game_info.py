@@ -21,7 +21,6 @@ def main():
     res = requests.get('http://www.stat-nba.com/playoffchart/{0}.html'.format('2018'))
     res.encoding = 'utf-8'
     soup = BeautifulSoup(res.content.decode('utf-8', 'ignore'), 'html')
-    print(soup)
     res = soup.find_all('div')
 
 def get_content(result,game_type,data_type,data_time,season,season_type):

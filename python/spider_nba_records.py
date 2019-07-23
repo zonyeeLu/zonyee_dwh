@@ -14,10 +14,10 @@ import requests
 from pyhive import hive
 
 def main():
-    # xml_file = open("D:\\temp\\test.xml",'w+',encoding="utf-8")
+    global playoff_game_info_file
+    playoff_game_info_file = open("D:\\temp\\playoff_game_info_file.txt", 'w+', encoding="utf-8")
     res = requests.get('http://www.stat-nba.com/index.php#superstarList')
     res.encoding = 'utf-8'
-    # xml_file.write(str(res.text.replace(u'\xa9', u'')))
     soup = BeautifulSoup(res.content.decode('utf-8', 'ignore'), 'html')
     res = soup.find_all('div')
     # print("得分榜==>总分榜")

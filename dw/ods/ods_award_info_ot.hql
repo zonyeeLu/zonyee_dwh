@@ -1,14 +1,15 @@
 -- noinspection SqlDialectInspectionForFile
 -- ******************************************************************************
--- 程序名称:     ods_award_info.hql
+-- 程序名称:     ods_award_info_ot.hql
 -- 功能描述:     荣誉表
 -- 输入参数:     无
 -- 创建人名:     zonyee_lu
 -- 创建日期:     20190722
 -- ******************************************************************************
 
-create table ods.ods_award_info(
+create table ods.ods_award_info_ot(
 season string comment '赛季',
+award_type string comment '荣誉类型',
 player_name string comment '球员名称',
 player_type string comment '球员类型',
 player_id string comment '球员id',
