@@ -1,6 +1,7 @@
 #Hadoop 框架的大概了解  
 
-####1.什么是hadoop  
+####1.什么是hadoop   
+
     (1) hadoop 还分布式系统基础架构,解决了大数据的可靠存储和处理(hdfs/mapreduce)
     (2) hadoop 的两大功能:海量数据的存储 海量数据的分析
     (3) hadoop 的三大核心组件:
