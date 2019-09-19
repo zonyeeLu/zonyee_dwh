@@ -71,9 +71,41 @@
         3.shuffle 过程包含(1.2,1.3,1.4,2.1,2.2)
           shuffle的产生是由于同一个key需要传到同一个reduce中,此过程是整个MR中最耗费时间的步骤  
           如果mapreduce中不需要reduce(select *)则系统调用默认的reduce,不做任何操作  
-        4.![avatar](zonyee_dwh/pic/mapreduce.png)  
+        4.流程图 zonyee_dwh/pic/mapreduce.png  
     
     (2) 内存计算(spark)  
+        执行过程  
+        1.spark-submit提交application,有driver创建一个sparkContext向resourceMangement申请资源(excutor数和内存数)  
+          任务分配和监控  
+        2.RM向excutor分配资源并且启动excutor进程  
+        3.SC根据action算子划分成多个job,每个job内部根据依赖关系构建DAG图  
+        4.SparkContext把一个个TaskSet(stage)提交给底层调度器Taskscheduler处理;Executor向SparkContext申请Task发给Executor运行,并提供应用程序代码  
+        5.Task在Executor上运行,把执行结果反馈给TaskScheduler,然后反馈给DAGScheduler,运行完毕后写入数据并释放所有资源  
+        核心概念  
+        1.RDD 弹性分布式数据集,action和transformation  
+        2.广播变量 只能在driver定义:sc.broadcast(list) broadcast.value  
+        3.累加器 sc.accumulator(0)/累加器在Driver端定义赋初始值，累加器只能在Driver端读取最后的值，在Excutor端更新  
+        基本概念  
+        1.Application:就是spark-submit 提交的程序,包括读取文件形成rdd/输出结果  
+        2.driver:执行application中的main以及创建SparkContext,完成任务调度以及executor driver启动之后的第一件事就是向集群资源管理器(master)申请资源  
+        3.master:负责分配资源,在application启动时,driver 向master申请资源,worker负责监控节点的内存等情况,并且向master汇报,常驻mater进程,负责管理全部的worker节点  
+        4.worker:对executor进行监控并且将节点的内存等情况与master交互,常驻worker进程,负责管理executor  
+        5.executor:执行task,num-executors->每个节点的executor数/executor-memory->每个executor的内存/executor-cores->每个executor的内核数  
+          内存分配情况:1.execution(20%)执行内存,执行代码(join)/shuffle部分数据  
+                      2.storage(60%)存储cache persist broadcast(广播)的地方  
+                      3.other(20%)预留内存  
+        6.job:spark中job的个数对应的是代码中action 算子的个数,job会被分解成stage和task  
+        7.stage:一个job会分成多组task,每一组被称为stage其中划分是根据是否产生shuffle，产生shuffle之前是一个stage，shuffle是另外一个stage;其中宽依赖会产生shuffle窄依赖不产生shuffle  
+        8.task:task是spark中的最小执行单元(shuffleTask和resultTask)，一般来说RDD有多少个分区就有多少个task,每一个task只处理一个partition上的数据  
+               Task的并发度=executor数目*每个executor核数  
+        RDD特性  
+        1.高效容错性  
+          (1)数据检查点/记录日志  
+          (2)根据血缘关系重新计算丢失分区  
+        2.中间结果持久化到内存  
     
-    (3) DAG计算(Tez)  
+    (3) DAG计算(Tez)用过一两次,对着不是很熟悉,待研究
+        1.是基于Hadoop Yarn之上的DAG(有向无环图,Directed Acyclic Graph)计算框架.它把map/Reduce过程拆分成若干个子过程,同时可以把多个Map/Reduce任务组合成一个较大的DAG任务,减少了Map/Reduce之间的文件存储.同时合理组合其子过程,也可以减少任务的运行时间  
+         
+        
     
