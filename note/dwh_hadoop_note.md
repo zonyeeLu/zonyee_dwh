@@ -71,7 +71,7 @@
         3.shuffle 过程包含(1.2,1.3,1.4,2.1,2.2)
           shuffle的产生是由于同一个key需要传到同一个reduce中,此过程是整个MR中最耗费时间的步骤  
           如果mapreduce中不需要reduce(select *)则系统调用默认的reduce,不做任何操作  
-        4.![avatar](zonyee_dwh/pic/mapreduce.png)
+        4.![avatar](zonyee_dwh/pic/mapreduce.png)  
     
     (2) 内存计算(spark)  
     
