@@ -56,5 +56,23 @@
       2.大量的小文件对Hdfs是致命的,会大量的占用NameNode的空间  
       3.不支持文件随机修改,只支持追加写入   
       
-####3. 海量的数据分析(计算原理):  
-    (1)
+####3.海量的数据分析(计算原理)   
+
+    (1) 离线计算(MapReduce)  
+        1.Map过程(split->map()->spill->partition->sort->combine(可选)->merge)  
+          (1)文件输入会进行切片(split)并且执行map()得到新的键值对  
+          (2)map()执行的结果会放到缓冲区(100M,满80%则开始写入磁盘)--spill  
+          (3)在写入磁盘的过程中会进行分区(hashpartition),排序(sort 快排),分组,combine(<key,2>)  
+          (4)写入磁盘(merge(<key,{1,1}>)),多个小文件形成大文件  
+        2.Reduce过程(copy->sort->merge->reduce())  
+          (1)reduce开始会从map的输出中通过网络传输获取数据(copy),同一个分区的数据会传到同一个reduce  
+          (2)数据copy之后按照key进行排序,并且进行归并(<key,{1,1}>),注意不是合并(<key,2>)  
+          (3)执行reduce方法并且进行输出结果文件  
+        3.shuffle 过程包含(1.2,1.3,1.4,2.1,2.2)
+          shuffle的产生是由于同一个key需要传到同一个reduce中,此过程是整个MR中最耗费时间的步骤  
+          如果mapreduce中不需要reduce(select *)则系统调用默认的reduce,不做任何操作  
+    
+    (2) 内存计算(spark)  
+    
+    (3) DAG计算(Tez)  
+    
