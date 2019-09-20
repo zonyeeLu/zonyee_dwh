@@ -18,6 +18,7 @@
         3)hive不支持事务  
       
 ####3.hive sql  
+
     此部分主要是sql语法,平时工作中积累即可  
     
 ####4.hive元数据  
@@ -30,6 +31,7 @@
     (6)完整信息可以查看: http://note.youdao.com/noteshare?id=a8e85553c7262081a7c47b7d68d5bfee&sub=F93DAC1182394D74B6B8C2A43DED2FE6  
     
 ####5.hive文件格式以及压缩效率  
+
     (1) 行存储和列存储  
         1)行存储  
           1. 相关的数据存在一起,一行就是一条记录  
