@@ -30,7 +30,7 @@
     (6)完整信息可以查看: http://note.youdao.com/noteshare?id=a8e85553c7262081a7c47b7d68d5bfee&sub=F93DAC1182394D74B6B8C2A43DED2FE6  
     
 ####5.hive文件格式以及压缩效率  
-    (1)
+    (1) 
      
     
          
