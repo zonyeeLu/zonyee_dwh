@@ -22,7 +22,7 @@
                      
     (3)Hdfs的写过程  
        1.client 向NameNode发送请求,NameNode检查文件是否存在,父路径是否存在(路径不存在会报错)  
-       2.NameNode 向client 反馈是否可以上传  
+       2.NameNode 向client 反馈是否可以上传,并且返回可写入数据的DataNode    
        3.client 对文件进行切分(128M)成block,请求第一个block发送到那些DataNode上  
        4.NameNode返回可以存放数据的DataNode   
        5.client请求最近的一台DataNode上传数据(socket连接),第一台DataNode请求调用第二台,一次类推并且建立pipeline  
@@ -77,14 +77,14 @@
         执行过程  
         1.spark-submit提交application,有driver创建一个sparkContext向resourceMangement申请资源(excutor数和内存数)  
           任务分配和监控  
-        2.RM向excutor分配资源并且启动excutor进程  
+        2.RM向executor分配资源并且启动executor进程  
         3.SC根据action算子划分成多个job,每个job内部根据依赖关系构建DAG图  
         4.SparkContext把一个个TaskSet(stage)提交给底层调度器Taskscheduler处理;Executor向SparkContext申请Task发给Executor运行,并提供应用程序代码  
         5.Task在Executor上运行,把执行结果反馈给TaskScheduler,然后反馈给DAGScheduler,运行完毕后写入数据并释放所有资源  
         核心概念  
         1.RDD 弹性分布式数据集,action和transformation  
         2.广播变量 只能在driver定义:sc.broadcast(list) broadcast.value  
-        3.累加器 sc.accumulator(0)/累加器在Driver端定义赋初始值，累加器只能在Driver端读取最后的值，在Excutor端更新  
+        3.累加器 sc.accumulator(0)/累加器在Driver端定义赋初始值,累加器只能在Driver端读取最后的值,在Excutor端更新  
         基本概念  
         1.Application:就是spark-submit 提交的程序,包括读取文件形成rdd/输出结果  
         2.driver:执行application中的main以及创建SparkContext,完成任务调度以及executor driver启动之后的第一件事就是向集群资源管理器(master)申请资源  
@@ -104,8 +104,16 @@
           (2)根据血缘关系重新计算丢失分区  
         2.中间结果持久化到内存  
     
-    (3) DAG计算(Tez)用过一两次,对着不是很熟悉,待研究
+    (3) DAG计算(Tez)用过一两次,对着不是很熟悉,待研究  
         1.是基于Hadoop Yarn之上的DAG(有向无环图,Directed Acyclic Graph)计算框架.它把map/Reduce过程拆分成若干个子过程,同时可以把多个Map/Reduce任务组合成一个较大的DAG任务,减少了Map/Reduce之间的文件存储.同时合理组合其子过程,也可以减少任务的运行时间  
+    
+    (4)三者区别:
+       1.spark在内存中处理数据,MR是在磁盘中处理数据,正常情况下spark会比较快;当数据量非常大的时候,不能一次性加载到内存中,spark性能会降低  
+         当数据适量且适合读入内存时用spark;当数据不能一次性读取内存,且还要与其他服务同时运行时用MR  
+       2.spark更易于编程,用灵活的api;MR用很多工具使其易于使用(hive...)  
+       3.spark除了数据处理,还有机器学习,实时处理等等;MR在数据批处理上比较稳定  
+       4.Tez是将MR细化,在执行复杂sql的时候相比较MR更具备优势  
+    
          
         
     
