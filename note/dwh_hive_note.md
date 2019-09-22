@@ -56,7 +56,50 @@
     (7) 压缩效率: ORCFile(50倍) > parquet(10倍) > RCFile(1.5倍) > Sequencefile(1.3倍) > TextFile  
     (8) 查询效率: ORCFile > parquet > RCFile > Sequencefile > TextFile  
     
-          
+####6.hive分区分桶  
+    (1)分区  
+       1.在表目录下创建文件目录,是一个伪列(不是表中的某一列)  
+       2.避免全表扫描,提高查询效率  
+       3.单值分区(直接定义分区列或者create table like,注意不能create table as select 创建分区表)    
+         (1)静态分区  
+         (2)动态分区 set hive.exec.dynamic.partition=true/set hive.exec.max.dynamic.partitions=2000  
+       4.范围分区(只能通过直接定义分区列创建范围分区表.分区键前闭后开,最后出现的分区可以使用 MAXVALUE 作为上限MAXVALUE 代表该分区键的数据类型所允许的最大值)  
+         (1)DROP TABLE IF EXISTS test_demo;  
+            CREATE TABLE test_demo (value INT)  
+            PARTITIONED BY RANGE (id1 INT, id2 INT, id3 INT) 
+            (  
+                -- id1在(--∞,5]之间，id2在(-∞,105]之间，id3在(-∞,205]之间  
+                PARTITION p5_105_205 VALUES LESS THAN (5, 105, 205),  
+                -- id1在(--∞,5]之间，id2在(-∞,105]之间，id3在(205,215]之间  
+                PARTITION p5_105_215 VALUES LESS THAN (5, 105, 215),  
+                PARTITION p5_115_max VALUES LESS THAN (5, 115, MAXVALUE),  
+                PARTITION p10_115_205 VALUES LESS THAN (10, 115, 205),  
+                PARTITION p10_115_215 VALUES LESS THAN (10, 115, 215),  
+                PARTITION pall_max values less than (MAXVALUE, MAXVALUE, MAXVALUE)  
+            );  
+
+    (2)分桶  
+       1.将表中记录按照分桶键(表中的某一列)的哈希值分散进入多个文件中  
+       2.创建方式:  
+         (1)直接建表 CLUSTERED BY(pcid) INTO 10 BUCKETS 
+            sorted by (uid desc) – 指定数据的排序规则，表示预期的数据就是以这里设置的字段以及排序规则来进行存储   
+         (2)create table like  
+         (3)create table as select(单值分区不能这样使用)  
+       3.写入数据方式:  
+         (1) SET hive.enforce.bucketing=true;  
+         (2) 将reducer个数设置为目标表的桶数，并在 SELECT 语句中用 DISTRIBUTE BY <bucket_key>对查询结果按目标表的分桶键分进reducer中  
+             SET mapred.reduce.tasks = <num_buckets>  
+             DISTRIBUTE BY <bucket_key> 
+       4.取值方式  
+         tablesample(bucket x out of y on uid)  
+         x:代表从第几桶开始查询  
+         y:查询的总桶数,y可以是总的桶数的倍数或者因子;x不能大于y  
+         total_bucket/y: 大于1表示取几个桶的数据(x/(x+y)...)  
+                         小于1表示取第x个桶的total_bucket/y数据  
+                     
+         
+           
+         
      
     
          
