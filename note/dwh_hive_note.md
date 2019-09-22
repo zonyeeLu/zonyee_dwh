@@ -57,6 +57,7 @@
     (8) 查询效率: ORCFile > parquet > RCFile > Sequencefile > TextFile  
     
 ####6.hive分区分桶  
+
     (1)分区  
        1.在表目录下创建文件目录,是一个伪列(不是表中的某一列)  
        2.避免全表扫描,提高查询效率  
