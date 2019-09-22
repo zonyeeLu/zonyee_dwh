@@ -98,7 +98,9 @@
          total_bucket/y: 大于1表示取几个桶的数据(x/(x+y)...)  
                          小于1表示取第x个桶的total_bucket/y数据  
                          
-####6.hive调优
+####6.hive调优  
+
+    
                      
          
            
