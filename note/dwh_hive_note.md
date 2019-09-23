@@ -100,6 +100,71 @@
                          
 ####6.hive调优  
 
+    (1) mapreduce不担心处理大数据,而是担心数据倾斜,慎用count(distinct)  
+    (2) 设置合理的map数和reduce数  
+        1.map阶段:  
+          (1)减少map数:  
+             当表文件是很多个远小于128m的文件时(100个,共10g),正常情况下会启动100个map去执行  
+             此时可以调整参数:  
+             set mapred.max.split.size=100000000;  
+             set mapred.min.split.size.per.node=100000000;  
+             set mapred.min.split.size.per.rack=100000000;  
+             set hive.input.format=org.apache.hadoop.hive.ql.io.CombineHiveInputFormat;    
+             100000000是100m,文件大小大于128m,则按照128来切分;100-128则按照100m切分;小于100m则合并  
+             从而减少了map数  
+          (2)增加map数:  
+             当表(table_a)文件只有一个文件时,并且只有两个字段,文件大小1g  
+             可以将table_a写入table_b并且设置set mapred.reduce.tasks=10;从而拆成10个小文件  
+             从而增大了map数  
+          综上:使用单个map处理合适的数据量  
+        2.reduce阶段:  
+          (1) reduce个数对整个作业的运行影响很大,reduce个数过大会产生很多小文件从而影响NameNode  
+              reduce个数过少那么单个reduce处理的数据就会加大可能会引起内存溢出  
+              mapred.reduce.tasks/mapreduce.job.reduces hive会直接使用他们的值作为reduce个数  
+          (2) hive.exec.reducers.bytes.per.reducer 每个reduce默认处理数据的数量是1g  
+              hive.exec.reducers.max 每个任务最大的reduce个数默认是999  
+          (3) 只有一个reduce的情况  
+              1.没有group by 的汇总  select count(1) from popt_tbaccountcopy_mes where pt = ‘2012-07-04’  
+              2.用了order by  
+              3.产生了笛卡尔积  
+          (4) 小文件的合并  是否合并Map输出文件:hive.merge.mapfiles=true(默认值为真)/合并Reduce 端输出文件hive.merge.mapredfiles=false(默认值为假)/合并文件的大小:hive.merge.size.per.task=256*1000*1000(默认值为 256000000)  
+              1.产生小文件的原因:  
+                (1)动态分区插入数据,分区字段的key很多  
+                (2)reduce数量很多  
+                (3)数据源本身就包含很多小文件  
+              2.小文件的影响  
+                (1)每个小文件都要启动一个map去执行,map的启动初始化都会浪费大量的资源  
+                (2)小文件都占用大量的元数据内存,会对NameNode造成影响  
+              3.小文件问题的解决方案  
+                (1)少使用动态分区或者动态分区字段需要慎重选择  
+                (2)控制reduce个数  
+                (3)使用压缩文件存储,并且进行文件合并  
+                (4)对已存在大量的小文件,可以重建表控制reduce个数  
+        3.Map join  
+          (1) 通过mapreduce local task 将小表(1g)读入到内存中生成hashtablefile上传到distributed cache 中  
+          (2) 在map阶段,每个mapper从distributed cache读取hashtablefile到内存中顺序扫描大表,在map阶段进行join将数据传给下个mapreduce任务  
+              也就是在map端进行join避免了shuffle  
+        4.引擎选择  
+          hive.execution.engine = tez  
+        5.sql语法的优化  
+          1.通过子查询先把不用的数据过滤掉  
+          2.用distinct和union all 代替 union  
+          3.数据倾斜处理  
+            (1)过滤掉倾斜的key(如null)  
+            (2)打散倾斜的key(加随机值)  
+            (3)数据倾斜参数调整 hive.map.aggr = true 在map端做聚合 combiner (相当于是本地的reduce 并不适用avg)  
+                              hive.groupby.skewindata = true 是负载均衡 但是支持是一个count(distinct)  
+                              原理:启动两个mr 第一个将map数据随机分配到reducer中 做部分聚合操作 这样处理是相同的key可能在不同的reducer中  
+                                  第二个mr 根据group by key 相同的key分配到同一个reduce中 因为第一个mr已经经过预计算  
+          4.避免一个sql中包含负责的处理逻辑,可以使用中间表  
+          5.当对不同的表时:如果union all的部分个数大于2,或者每个union部分数据量大,应该拆成多个insert into 语句,实际测试过程中,执行时间能提升50%  
+            当对同一张表: union all 效率比insert into 要高  
+         
+        
+                
+        
+             
+             
     
                      
          
