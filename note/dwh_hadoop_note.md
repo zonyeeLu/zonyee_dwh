@@ -72,6 +72,7 @@
           shuffle的产生是由于同一个key需要传到同一个reduce中,此过程是整个MR中最耗费时间的步骤  
           如果mapreduce中不需要reduce(select *)则系统调用默认的reduce,不做任何操作  
         4.流程图 zonyee_dwh/pic/mapreduce.png  
+![mapreduce.png](mapreduce.png)
     
     (2) 内存计算(spark)  
         执行过程  
