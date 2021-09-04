@@ -9,4 +9,5 @@
             c中ip 185.199.108.153 assets-cdn.github.com
             c中ip 185.199.109.153 assets-cdn.github.com
             c中ip 185.199.110.153 assets-cdn.github.com
-            c中ip 185.199.111.153 assets-cdn.github.com `
+            c中ip 185.199.111.153 assets-cdn.github.com
+      (3) cmd ipconfig /flushdns`
