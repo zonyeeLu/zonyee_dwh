@@ -25,6 +25,28 @@
 
 https://www.cnblogs.com/felixzh/p/4680808.html  
 $\color{red}说明:map节点执行map task任务生成map的输出结果.$
+
+#### Map过程
+     代码过程:
+     1. 调用Mapper中的run()方法(利用Recordreader读取数据)
+     run(){
+        while(context.netKeyvalue()){
+             map(key,value)
+        }
+     }
+     -- 初始化可以使用Mapper中的setup()方法
+     2. map方法中使用context.write()方法将结果输出到环形缓冲区
+     3. write方法先调用Mapoutputcollector.collect() 将数据写入环形缓冲区
+     4. 在调用partition方法按照key的hash值进行分区(对key hash后再以reduce task数量取模，返回值决定着该键值对应该由哪个reduce处理) 
+     5. 调用spillthread().run()方法中的sortAndSpill()对数据进行排序以及溢写到磁盘
+     6. map()结果输出到环形缓冲区(默认100M)
+     逻辑过程:
+![avatar](./Mapper中的方法.png)
+![avatar](./map方法.png)
+![avatar](./map中write方法.png)
+![avatar](./map中write方法2.png)
+![avatar](./map中write方法调用partition.png)
+
 #### shuffle的工作内容
 
       
@@ -37,7 +59,8 @@ $\color{red}说明:map节点执行map task任务生成map的输出结果.$
 ### MapReduce的核心三大组件(在shuffle中起作用)
 #### partitioner
      对maptask结果数据按照key值的某个值(如hash进行分区操作),并且设置reducetask分区(默认hashpartition)
-     1.指定reducetask 个数
+     按照key分别映射给不同的reduce，也是可以自定义的
+     是在环形缓冲区中进行分区
 #### combiner
 ##### 1.定义:
       Combiner是mapreduce中Mapper和reducer之外的一个组件,作用于maptask之后对maptask的输出结果进行局部汇总,减轻reducetask的计算负载,减少网络传输
