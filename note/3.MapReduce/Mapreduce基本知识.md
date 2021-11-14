@@ -69,6 +69,8 @@ $\color{red}说明:map节点执行map task任务生成map的输出结果.$
    
 $\color{red}说明:对MapReduce的调优在很大程度上就是对MapReduce Shuffle的性能的调优.$
 
+reduce task并不一定是要等全部的maptask完成后才能进行,而是在一部分maptask完成后就开始启动,但是并不是做计算,而是拉取数据
+
  ![avatar](./reduce过程.jpg)
 
 #### shuffle的工作内容
