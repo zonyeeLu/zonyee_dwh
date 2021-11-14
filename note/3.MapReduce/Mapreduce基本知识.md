@@ -32,25 +32,51 @@ $\color{red}说明:map节点执行map task任务生成map的输出结果.$
      run(){
         while(context.netKeyvalue()){
              map(key,value)
-        }
+        } 
      }
      -- 初始化可以使用Mapper中的setup()方法
      2. map方法中使用context.write()方法将结果输出到环形缓冲区
      3. write方法先调用Mapoutputcollector.collect() 将数据写入环形缓冲区
-     4. 在调用partition方法按照key的hash值进行分区(对key hash后再以reduce task数量取模，返回值决定着该键值对应该由哪个reduce处理) 
-     5. 调用spillthread().run()方法中的sortAndSpill()对数据进行排序以及溢写到磁盘
+     4. collect中调用partition方法按照key的hash值进行分区(对key hash后再以reduce task数量取模，返回值决定着该键值对应该由哪个reduce处理) 
+     5. collect中再调用spillthread().run()方法中的sortAndSpill()对数据进行排序以及溢写到磁盘,如果设置了combiner,会将相同的key的value进行合并,减少溢写到磁盘的数据量
      6. map()结果输出到环形缓冲区(默认100M)
      逻辑过程:
+     1. map task任务执行,输入数据源为HDFS上的block;map task读取的是split 切片.split切片与block默认为一对一的关系,也有可能是多对一
+        block(物理划分):
+        文件上传hdfs后,会被划分成数据块(物理划分),按照128M的默认大小将文件切分,同一个数据块会被默认冗余存储3份,当修改block的默认大小后,新上传的文件会按照新的block大小进行划分,以前上传的文件还是之前的block大小
+        split(逻辑切块):
+        mapreduce中的split切块是逻辑上的划分,目的是为了map task更好的获取数据,具体的split切片大小(spliteSize=max(minSize,min(maxSize,blockSize)))
+     2. map执行之后得到key-value对,调用partitioner接口,对kv对进行分区处理(默认:对key hash,再以reduce task数进行取模,决定哪个kv交给哪个reduce处理)   这种默认的分区方式,是为了平均reduce的处理能力,防止数据倾斜,保证负载均衡
+     3. 将分区后的数据写进环形缓冲区(批量收集map结果,减少数据io,整个环形缓冲区是一个字节数组),   环形缓冲区的默认大小为100M,当maptask的输出很多并且装满环形缓冲区的80%时,会将数据以临时文件的方式写入磁盘(spill 溢写)-- 有单线程完成,不影响数据继续写入环形缓冲区
+     4. 当spill线程启动时,会对80M的数据中的key进行排序(sort)-- sortAndSpill() 方法
+     5. 如果设置了combiner方法,其会将相同key的kv对进行合并,减少溢写到磁盘的数据量,但是这并不能保证map的结果中所有相同的key都进行合并了,combiner的作用范围之后80M的环形缓冲区   combiner能保证每个溢写的临时文件中的key是唯一的
+     6. 溢写生成的文件会随着maptask的输出结果数量增大而变多,当整个maptask都完成时,内存中的数据会全部溢写到一个文件中   也就是说溢写过程中产生的临时文件最终会归并成同一个文件(merge,得到结果如:{"A",[1,1,1,2]}),如果设置了combiner方法,也会调用combiner来合并key值(最后一个maptask中的溢写文件同一个key只有一个) -- 分区有序,但是整个文件无序
+     7. map端结束          
 ![avatar](./Mapper中的方法.png)
 ![avatar](./map方法.png)
 ![avatar](./map中write方法.png)
-![avatar](./map中write方法2.png)
+![avatar](./map中write方法2.png)·
 ![avatar](./map中write方法调用partition.png)
 
+ #### Reduce过程 
+      逻辑过程:
+      1. copy过程,启动copy进程(默认10),通过http方式请求map task所在的taskTrack获取maptask的输出文件(都在本地磁盘中)
+      2. Merge阶段: 与map端的merge相同,只是将来源不同的map; copy来的数据会先放入内存缓冲区,这里的内存缓冲区是基于jvm的heap Size设置,因为shuffle阶段不需要执行reduce方法,因此绝大部分内存都可以被shuffle使用
+      3. merge有三种形式(内存到内存,内存到磁盘,磁盘到磁盘),默认情况下第一种不使用;   第二种方式:在copy数据时内存使用到一定数据量,就会启动内存到磁盘的merge(溢写);如果设置了combiner,也会调用combiner;磁盘中会生成多个文件,merge一直在运行,直到没有map数据时才结束,然后启动第三种磁盘到磁盘的方式生成最终的文件
+      4. 随着溢写文件的增多,后台线程会将他们合并成一个更大的有序文件
+      5. 合并的过程会产生许多中间文件(写入磁盘),但是mapreduce会让写入磁盘的数据尽可能的少
+      6. reduce的输入文件:在不断的merge之后会最终生成一个最终文件(磁盘或者内存中),默认情况数据是在磁盘中的,当reduce输入文件确定,整个shuffle才结束,然后启动reduce函数,最终结果放在hdfs上
+   
+$\color{red}说明:对MapReduce的调优在很大程度上就是对MapReduce Shuffle的性能的调优.$
+
+ ![avatar](./reduce过程.jpg)
+
 #### shuffle的工作内容
+     map端: 从运算效率来看,map输出的结果优先存储在map节点的内存中.每个map task都有一个内存缓冲区(默认100M),当缓冲区使用80%时,需要将缓冲区数据以临时文件的方式存到磁盘,当整个map task结束后,再对磁盘中的所有临时文件进行合并生成最终的输出文件.最后等待reduce task来拉取数据
+     reduce端:不断拉取当前job里的每个maptask的最终结果,并对不同map拉取过来的数据进行merge操作,最终会形成一个文件作为reduce task的输入文件
 
       
-![avatar](./reduce过程.jpg)
+
 ### 并行度:一个MR程序中maptask和reducetask的任务量
 #### Maptask的并行度决定机制(每个maptask处理一个逻辑切片)
     1. splitsize:blocksize,maxsize,minsize的中间值决定切片大小(min(blocksize,max(maxsize,minsize)))
