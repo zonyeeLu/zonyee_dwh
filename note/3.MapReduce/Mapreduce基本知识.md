@@ -36,8 +36,8 @@ $\color{red}说明:map节点执行map task任务生成map的输出结果.$
      }
      -- 初始化可以使用Mapper中的setup()方法
      2. map方法中使用context.write()方法将结果输出到环形缓冲区
-     3. write方法先调用Mapoutputcollector.collect() 将数据写入环形缓冲区
-     4. collect中调用partition方法按照key的hash值进行分区(对key hash后再以reduce task数量取模，返回值决定着该键值对应该由哪个reduce处理) 
+     3. write方法先调用Mapoutputcollector.collect(),且调用partitioner获取改key属于哪个分区,按照key的hash值进行分区(对key hash后再以reduce task数量取模，返回值决定着该键值对应该由哪个reduce处理)
+     4. 至此会将key/value 以及分区的结果写入环形缓冲区,
      5. collect中再调用spillthread().run()方法中的sortAndSpill()对数据进行排序以及溢写到磁盘,如果设置了combiner,会将相同的key的value进行合并,减少溢写到磁盘的数据量
      6. map()结果输出到环形缓冲区(默认100M)
      逻辑过程:
